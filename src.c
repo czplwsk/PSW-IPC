@@ -1,4 +1,4 @@
-
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,35 +7,93 @@
 struct account{
     char id[8];
     char password[8];
-};
+    bool in;
+}list[3];
 
-int authorize(char* login,char* password, struct account lista[3] ){
-    for (int i=0; i<10; i++){
-        if(strcmp(login,lista[i].id)==0){
-            if(strcmp(password,lista[i].password)==0){
-                printf("Pomyslnie zalogowano uzytkownika %s.\n",login);
-                
-            }
-            else{printf("Haslo jest niepoprawne. Nie udalo się zalogowac.\n");}
-        }
-        else{printf("Nie ma uzytkownika o takim loginie.\n");}
-        break;
-    }
-    return 0;
-}
+int authorize(char* login,char* password,int c );
+void user();
+void interface();
+
 
 int main(){
     int i=0;
     FILE *fp;
     fp = fopen("dane.txt","r");
     setbuf(fp, NULL);
-    struct account list[3];
-
+    //struct account list[3];
     while(!feof(fp)){
-        fscanf(fp,"%s%s",list[i].id,list[i].password);
-        fflush(fp);
+        fscanf(fp,"%s",list[i].id);
+        fscanf(fp,"%s",list[i].password);
+        list[i].in = 0;
         i+=1;
     }
-    authorize("eliza","eliza",list);
+    interface(list);
     fclose(fp);
 }
+
+
+
+int authorize(char* login,char* password,int c ){
+    for (int i=0; i<3; i++){
+        if(strcmp(login,list[i].id)==0){
+            if(strcmp(password,list[i].password)==0){
+                if(c){
+                    list[i].in=1;
+                    printf("\nPomyslnie zalogowano uzytkownika %s.\n\n",login);
+                    return 0;}
+                else{
+                    list[i].in=0;
+                    printf("\nPomyslnie wylogowano uzytkownika %s.\n\n",login);
+                    return 0;}
+            }else{
+                printf("Haslo jest niepoprawne.\n");
+                break;}
+        }}
+    printf("Nie ma uzytkownika o takim loginie.\n");
+    return 0;}
+
+void interface(){
+char x ='1';
+while(x=='1' || x=='2' || x=='3'){
+    printf("Co chcesz zrobic?\n");
+    printf(" 1 <- Obsluga uzytkownika\n");
+    printf(" 2 <- Obsulga grup\n");
+    printf(" 3 <- Wiadomosci\n\n");
+    x=getchar();
+    fflush(stdin);
+    switch(x){
+        case '1': 
+            user();
+            break; 
+        case '2':
+            break; 
+        }
+}}
+
+void user(){
+    char y = '0';
+    char id[8];
+    char password[8];
+    printf("Co chcesz zrobic?\n");
+    printf(" 1 <- Zaloguj\n");
+    printf(" 2 <- Wyloguj\n");
+    printf(" 3 <- Wyswietl liste zalogowanych uzytkownikow\n");
+    printf(" 4 <- Wyswietl liste uzytkownikow zapisancyh do danej grupy tematycznej\n\n");
+    y=getchar();
+    fflush(stdin);
+    switch (y)
+    {
+        case '1':    
+            printf("Podaj login i haslo: \n");
+            scanf("%s%s",id,password);
+            fflush(stdin);
+            authorize(id, password,1);
+            break;
+        case '2':
+            printf("Podaj login i haslo: \n");
+            scanf("%s%s",id,password);
+            fflush(stdin);
+            authorize(id, password,0);
+            break;
+    }
+    return;}
