@@ -11,60 +11,71 @@
 
 struct msg_buf{
   long mtype;
-  int mtext;
+  int mpid;
+  char mtext[100];
 }my_msg;
+
+struct msg_sen{
+  long mpid;
+  char mtext[100];
+}msg_send;
 
 struct account{
     char id[8];
-    char password[8];
     bool in;
+    int pid;
 }list[3];
 
-void authorize(char* login,char* password,int c );
+int authorize(char* login,int c );
 void logged_users_list();
 
 int main(int argc, char* argv[]){
-    int pids[9];
     int i=0;
     FILE *fp;
     fp = fopen("dane.txt","r");
     setbuf(fp, NULL);
     while(!feof(fp)){
         fscanf(fp,"%s",list[i].id);
-        fscanf(fp,"%s",list[i].password);
-        //printf("%s %s\n",list[i].id,list[i].password );
         list[i].in = 0;
         i+=1;}
     fclose(fp);
     int mid = msgget(4444,0644|IPC_CREAT);
     while(true){
-      if(msgrcv(mid,&my_msg,sizeof(int),1,0)==sizeof(int)){
+      msgrcv(mid,&my_msg,sizeof(my_msg)-sizeof(long),0,0);
+      switch(my_msg.mtype/1000){
+        case 1:
+          printf("hello\n");
+          int a = authorize(my_msg.mtext,1);
+          if(a)list[a].pid=my_msg.mpid;
+          msg_send.mpid=my_msg.mpid;
+          msgsnd(mid,&msg_send,sizeof(msg_send)-sizeof(long),0);
+          break;
 
+        case 2:
+        break;
       }
-
-      printf("%d\n",my_msg.mtext);
-      fflush(stdout);
     }
+    return 0;
 }
 
-void authorize(char* login,char* password,int c ){
+int authorize(char* login,int c ){
     for (int i=0; i<3; i++){
         if(strcmp(login,list[i].id)==0){
-            if(strcmp(password,list[i].password)==0){
-                if(c){
+                if(c && list[i].in==0){
                     list[i].in=1;
-                    printf("\nPomyslnie zalogowano uzytkownika %s.\n\n",login);
-                    return ;}
-                else{
+                    strcpy(msg_send.mtext,"Pomyslnie zalogowano.\n");
+                    return i;}
+                else if(!c && list[i].in==1){
                     list[i].in=0;
-                    printf("\nPomyslnie wylogowano uzytkownika %s.\n\n",login);
-                    return ;}
-            }else{
-                printf("Haslo jest niepoprawne.\n");
-                return;}
-        }}
-    printf("Nie ma uzytkownika o takim loginie.\n");
-    return ;}
+                    strcpy(msg_send.mtext,"Pomyslnie wylogowano.\n");
+                    return i;}
+                else{
+                  strcpy(msg_send.mtext,"Nie udało się wykonać operacji.\n");
+                  return 0;}
+                }
+        }
+    strcpy(msg_send.mtext,"Nie ma uzytkownika o takim loginie.\n");
+    return 0;}
 
 void logged_users_list(){
   printf("Zalogowani użytkownicy:\n");
